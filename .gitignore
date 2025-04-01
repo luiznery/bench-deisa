@@ -2,3 +2,4 @@ simulation/*
 deisa/*
 outputs/*
 deisa
+docker/images/*
