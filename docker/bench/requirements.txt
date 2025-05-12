@@ -19,6 +19,7 @@ jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
 locket==1.0.0
 MarkupSafe==3.0.2
+matplotlib
 msgpack==1.1.0
 narwhals==1.32.0
 packaging==24.2
