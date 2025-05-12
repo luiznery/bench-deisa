@@ -5,8 +5,6 @@
 #OAR -O outputs/OAR_bench_%jobid%.out
 #OAR -E outputs/OAR_bench_%jobid%.err
 
-singularity exec ~/bench/docker/images/bench.sif bash ./deisa/compile_deisa.sh
-
 cd ~/bench/
 singularity exec ~/bench/docker/images/bench.sif bash ./scripts/launch_all.sh
 
