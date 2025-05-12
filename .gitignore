@@ -6,3 +6,4 @@ docker/images/*
 .vscode/*
 */scheduler.json
 venv*/*
+*/.ipynb_checkpoints/*
