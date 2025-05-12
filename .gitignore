@@ -3,3 +3,6 @@ deisa/*
 outputs/*
 deisa
 docker/images/*
+.vscode/*
+*/scheduler.json
+venv*/*
