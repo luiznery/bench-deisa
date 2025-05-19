@@ -7,13 +7,26 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   curl \
   gfortran \
   build-essential \
-  libopenmpi-dev \
   cmake \
   libkokkos-dev \
   libyaml-dev \
   pkg-config \
   nodejs \
   npm
+# libopenmpi-dev \
+
+ENV OPENMPI_VERSION=4.1.0
+
+# Download, build, and install Open MPI
+RUN wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-${OPENMPI_VERSION}.tar.gz && \
+    tar -xzf openmpi-${OPENMPI_VERSION}.tar.gz && \
+    cd openmpi-${OPENMPI_VERSION} && \
+    ./configure --prefix=/usr/local && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    cd .. && \
+    rm -rf openmpi-${OPENMPI_VERSION} openmpi-${OPENMPI_VERSION}.tar.gz
 
 # Set python alternative
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
