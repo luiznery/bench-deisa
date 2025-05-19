@@ -19,7 +19,7 @@ S_INI=$OPWD/simulation/setup.ini
 PDI_DEISA_YML=$OPWD/simulation/io_deisa.yml
 
 # $SIM_EXE $S_INI $IO_DEISA
-pdirun mpirun -np $NMPI $SIM_EXE $S_INI $IO_DEISA --kokkos-map-device-id-by=mpi_rank 
+pdirun mpirun -np $NMPI $SIM_EXE $S_INI $PDI_DEISA_YML --kokkos-map-device-id-by=mpi_rank 
 
 wait $PYTHON_PID
 cd $OPWD
