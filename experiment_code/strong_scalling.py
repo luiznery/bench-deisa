@@ -10,7 +10,6 @@ HOME_DIR = os.path.expanduser("~")
 
 PATH_TO_SIF_FILE = HOME_DIR + "/bench/docker/images/bench.sif"
 
-SIMULATION_INI = HOME_DIR + "/bench/simulation/setup.ini"
 PDI_DEISA_YML = HOME_DIR + "/bench/simulation/io_deisa.yml"
 SIM_EXECUTABLE = HOME_DIR + "/bench/simulation/build/main"
 DEISA_PATH = HOME_DIR + "/bench/deisa/"
@@ -22,9 +21,19 @@ SCHEDULER_FILE = HOME_DIR + "/bench/experiment/scheduler.json"
 
 OUTPUT_DIR = HOME_DIR + "/bench/experiment/"
 
+
+
+SIMULATION_INI = HOME_DIR + "/bench/experiment_code/setup_strong.ini"
+
 # the total number of nodes needs to be THE SAME as the total number of workers passed in the analytics script
 DASK_WORKERS_PER_NODE = 1
-TOTAL_DASK_WORKERS = 2
+TOTAL_DASK_WORKERS = 4
+
+nb_reserved_nodes = 4 + 1 # execution nodes + 1 head node
+
+walltime = 60*60 # in seconds
+
+
 
 
 def get_configs(config_file):
@@ -54,12 +63,10 @@ def get_configs(config_file):
 
 configs = get_configs(SIMULATION_INI)
 
-nb_reserved_nodes = 2 + 1 # execution nodes + 1 head node
-
 jobs = execo_g5k.oarsub(
     [
         (
-            execo_g5k.OarSubmission(f"nodes={nb_reserved_nodes}", walltime=60*60),
+            execo_g5k.OarSubmission(f"nodes={nb_reserved_nodes}", walltime=walltime),
             "grenoble",
         )
     ]
