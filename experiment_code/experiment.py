@@ -51,9 +51,10 @@ def get_configs(config_file):
 #############################################
 #             Alloc the nodes
 #############################################
+
 configs = get_configs(SIMULATION_INI)
 
-nb_reserved_nodes = 1
+nb_reserved_nodes = 2
 
 jobs = execo_g5k.oarsub(
     [
@@ -131,7 +132,7 @@ print("Initializing the workers...")
 
 worker_cmd = (
     f"dask worker "
-    # f"tcp://{head_node_ip}:8786 "
+    f"tcp://{head_node_ip}:8786 "
     # f"--dashboard-address {head_node.address}:8787 "
     f"--nworkers {DASK_WORKERS_PER_NODE} "
     "--nthreads 1 "
@@ -144,7 +145,7 @@ worker_cmd = (
     # redirecting the output to a file
 worker_process = execo.SshProcess(
     f'singularity exec {PATH_TO_SIF_FILE} bash -c "{worker_cmd}"',
-    head_node,
+    nodes[0],
 )
 worker_process.start()
 
@@ -217,7 +218,7 @@ print("Simulation command:")
 print(mpi_cmd)
 mpi_process = execo.SshProcess(
     mpi_cmd,
-    head_node,
+    nodes[0],
 )
 mpi_process.start()
 
@@ -226,3 +227,7 @@ print("Analytics started!")
 print("Waiting for the simulation to finish...")
 mpi_process.wait()
 print("Simulation finished!")
+# Wait for the analytics to finish
+print("Waiting for the analytics to finish...")
+analytics_process.wait()
+print("Analytics finished!")
