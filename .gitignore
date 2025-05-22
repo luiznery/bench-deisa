@@ -7,3 +7,7 @@ docker/images/*
 */scheduler.json
 venv*/*
 */.ipynb_checkpoints/*
+*.log
+*.e
+*.o
+*.txt
