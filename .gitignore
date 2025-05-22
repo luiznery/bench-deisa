@@ -11,3 +11,5 @@ venv*/*
 *.e
 *.o
 *.txt
+*.html
+*.png
