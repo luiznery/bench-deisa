@@ -22,21 +22,25 @@ import matplotlib.pyplot as plt
 
 # Initialize Deisa
 if len(sys.argv) < 3:
-    raise Exception("Number of dask workers not set. Usage: python3 bench_deisa.py <n_dask_workers> <scheduler_file_name>")
+    raise Exception("[Analytics] Number of dask workers not set. Usage: python3 bench_deisa.py <n_dask_workers> <scheduler_file_name>")
 else:
     nb_workers = int(sys.argv[1])
     scheduler_file_name=str(sys.argv[2])
-    print(f"parameters: dask workers - {nb_workers}, schedueler_file - {scheduler_file_name}", flush=True)
+    print(f"[Analytics] parameters: dask workers - {nb_workers}, schedueler_file - {scheduler_file_name}", flush=True)
 
 deisa = Deisa(scheduler_file_name=scheduler_file_name, 
               nb_workers=nb_workers,
               use_ucx=False)
 
-print("getting client")
+print("[Analytics] deisa initialized",flush=True)
+
+print("[Analytics] getting client", flush=True)
 client = deisa.get_client()
 # Get client
-print("getting deisa array")
+print("[Analytics] getting deisa array", flush=True)
 arrays = deisa.get_deisa_arrays()
+
+print("[Analytics] arrays received", flush=True)
 
 # Select data
 gt = arrays["global_t"][:, :, :, :, :]
@@ -49,11 +53,11 @@ mt = len(gt[:, 0, 0, 0, 0])
 assert isinstance(mx, int)
 assert isinstance(my, int)
 assert isinstance(mz, int)
-print("X-dim =", mx, flush=True)
-print("Y-dim =", my, flush=True)
-print("Z-dim =", mz, flush=True)
+print("[Analytics] X-dim =", mx, flush=True)
+print("[Analytics] Y-dim =", my, flush=True)
+print("[Analytics] Z-dim =", mz, flush=True)
 z_pos = int(mz / 3)
-print("getting slice at z =", z_pos, flush=True)
+print("[Analytics] getting slice at z =", z_pos, flush=True)
 
 t_stride = 1
 
@@ -113,17 +117,17 @@ with performance_report(filename="dask-report.html"), dask.config.set(
     ts = time.time()
     res2 = ekin_persisted.compute()
     te = time.time()
-    print(f"time ekin: {te-ts}")
+    print(f"[Analytics] time ekin: {te-ts}")
 
     ts = time.time()
     res3 = sum_over_xy.compute()
     te = time.time()
-    print(f"time sum over xy: {te-ts}")
+    print(f"[Analytics] time sum over xy: {te-ts}")
 
     ts = time.time()
     res4 = fourier_amplitudes.compute()
     te = time.time()
-    print(f"time fourier: {te-ts}")
+    print(f"[Analytics] time fourier: {te-ts}")
 
 
 # diagnostics info
@@ -143,6 +147,6 @@ if isinstance(res, plt.Axes):
 
 res.savefig("plot.png")
 
-print("Done ", flush=True)
+print("[Analytics] Done ", flush=True)
 # deisa.wait_for_last_bridge_and_shutdown()
 client.close()
