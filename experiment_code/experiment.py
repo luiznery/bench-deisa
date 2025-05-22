@@ -23,7 +23,7 @@ SCHEDULER_FILE = HOME_DIR + "/bench/experiment/scheduler.json"
 OUTPUT_DIR = HOME_DIR + "/bench/experiment/"
 
 # the total number of nodes needs to be THE SAME as the total number of workers passed in the analytics script
-DASK_WORKERS_PER_NODE = 2
+DASK_WORKERS_PER_NODE = 1
 TOTAL_DASK_WORKERS = 2
 
 
@@ -54,7 +54,7 @@ def get_configs(config_file):
 
 configs = get_configs(SIMULATION_INI)
 
-nb_reserved_nodes = 2
+nb_reserved_nodes = 3
 
 jobs = execo_g5k.oarsub(
     [
@@ -143,11 +143,12 @@ worker_cmd = (
 
 # for node in nodes:
     # redirecting the output to a file
-worker_process = execo.SshProcess(
-    f'singularity exec {PATH_TO_SIF_FILE} bash -c "{worker_cmd}"',
-    nodes[0],
-)
-worker_process.start()
+for node in nodes:
+    worker_process = execo.SshProcess(
+        f'singularity exec {PATH_TO_SIF_FILE} bash -c "{worker_cmd}"',
+        node,
+    )
+    worker_process.start()
 
 print("Workers started!")
 
@@ -198,7 +199,7 @@ MPI_NP = mx * my * mz
 
 print(f"Running simulation with {MPI_NP} MPI processes")
 
-host_list = ",".join([f"{node.address}:{2}" for node in nodes])
+host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
 simulation_cmd = (
     f'export PYTHONPATH=/home/lmascare/bench/deisa/:$PYTHONPATH; '
     f'pdirun {SIM_EXECUTABLE} {SIMULATION_INI} {PDI_DEISA_YML} --kokkos-map-device-id-by=mpi_rank > {OUTPUT_DIR}simulation.e 2>&1'
@@ -231,3 +232,7 @@ print("Simulation finished!")
 print("Waiting for the analytics to finish...")
 analytics_process.wait()
 print("Analytics finished!")
+
+execo_g5k.oardel(jobs)
+
+print("Job deleted!")
