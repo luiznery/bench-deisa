@@ -221,7 +221,7 @@ try:
     print(mpi_cmd)
     mpi_process = execo.SshProcess(
         mpi_cmd,
-        nodes[0],
+        head_node,
     )
     mpi_process.start()
 
