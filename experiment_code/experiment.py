@@ -143,7 +143,21 @@ def run_analytics(node, total_dask_workers: int, deisa_path: str, analytics_py_f
 def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, deisa_path, 
                    sim_executable: str, simulation_ini: str, pdi_deisa_yml: str, output_dir: str, 
                    path_to_sif_file: str) -> execo.SshProcess:
-                       
+    """
+    Run the simulation in the given nodes.
+
+    Arguments:
+        head_node: The head node where the simulation will be run.
+        nodes (list): List of nodes where the simulation will be run.
+        mpi_np (int): Number of MPI processes.
+        cores_per_node (int): Number of cores per node.
+        deisa_path (str): Path to the DEISA directory.
+        sim_executable (str): Path to the simulation executable.
+        simulation_ini (str): Path to the simulation ini file.
+        pdi_deisa_yml (str): Path to the PDI DEISA YAML file.
+        output_dir (str): Directory where the output files will be saved.
+        path_to_sif_file (str): Path to the Singularity image file.
+    """
     
     host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
     # host_list = ",".join([f"{node.address}" for node in nodes])
