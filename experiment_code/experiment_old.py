@@ -204,6 +204,9 @@ try:
     host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
     # host_list = ",".join([f"{node.address}" for node in nodes])
     simulation_cmd = (
+        'export OMP_NUM_THREADS=2; '
+        'export OMP_PROC_BIND=spread; '
+        'export OMP_PLACES=threads; '
         f'export PYTHONPATH=/home/lmascare/bench/deisa/:$PYTHONPATH; '
         f'pdirun {SIM_EXECUTABLE} {SIMULATION_INI} {PDI_DEISA_YML} --kokkos-map-device-id-by=mpi_rank '
     )
