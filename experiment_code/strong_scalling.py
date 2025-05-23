@@ -1,6 +1,7 @@
 import execo_g5k
 import os
 import socket
+import time
 
 from experiment import *
 
@@ -76,6 +77,8 @@ if __name__ == "__main__":
         print(f"[{exp_name}] Initializing the workers...")
         run_workers(nodes, head_node_ip, DASK_WORKERS_PER_NODE, SCHEDULER_FILE, OUTPUT_DIR, PATH_TO_SIF_FILE)
         print(f"[{exp_name}] Workers started!")
+
+        time.sleep(5)  # wait for the workers to start
 
         # Running the analytics
         print(f"[{exp_name}] Initializing the analytics...")

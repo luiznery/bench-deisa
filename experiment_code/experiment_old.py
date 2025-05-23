@@ -152,6 +152,8 @@ try:
 
     print("Workers started!")
 
+    time.sleep(5)
+
 
     ##########################################################
     #                   RUNNING ANALYTICS
@@ -203,7 +205,7 @@ try:
     # host_list = ",".join([f"{node.address}" for node in nodes])
     simulation_cmd = (
         f'export PYTHONPATH=/home/lmascare/bench/deisa/:$PYTHONPATH; '
-        f'pdirun {SIM_EXECUTABLE} {SIMULATION_INI} {PDI_DEISA_YML} --kokkos-map-device-id-by=mpi_rank > {OUTPUT_DIR}simulation.e 2>&1'
+        f'pdirun {SIM_EXECUTABLE} {SIMULATION_INI} {PDI_DEISA_YML} --kokkos-map-device-id-by=mpi_rank '
     )
 
     # Build the command with two singularity exec calls:
@@ -214,7 +216,7 @@ try:
         f"mpirun -np {MPI_NP} "
         f"--map-by slot "
         f"--host {host_list} "
-        f'singularity exec {PATH_TO_SIF_FILE} bash -c "{simulation_cmd}"'
+        f'singularity exec {PATH_TO_SIF_FILE} bash -c "{simulation_cmd}" > {OUTPUT_DIR}simulation.e 2>&1'
     )
 
     print("Simulation command:")

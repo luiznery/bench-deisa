@@ -164,7 +164,7 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
 
     simulation_cmd = (
         f'export PYTHONPATH={deisa_path}:$PYTHONPATH; '
-        f'pdirun {sim_executable} {simulation_ini} {pdi_deisa_yml} --kokkos-map-device-id-by=mpi_rank > {output_dir}simulation.e 2>&1'
+        f'pdirun {sim_executable} {simulation_ini} {pdi_deisa_yml} --kokkos-map-device-id-by=mpi_rank '
     )
 
     # Build the command with two singularity exec calls:
@@ -175,7 +175,8 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
         f"mpirun -np {mpi_np} "
         f"--map-by slot "
         f"--host {host_list} "
-        f'singularity exec {path_to_sif_file} bash -c "{simulation_cmd}"'
+        f'singularity exec {path_to_sif_file} bash -c "{simulation_cmd}" '
+        f'> {output_dir}simulation.e 2>&1'
     )
 
     mpi_process = execo.SshProcess(
