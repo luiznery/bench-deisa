@@ -1,0 +1,11 @@
+Setting up and Running the experiments
+
+1. Clone this repo
+2. Make sure you have all the submodules in lib
+3. Clone my for fork of deisa, where the old deisa is modified to really run in-situ: https://github.com/luiznery/deisa-fork
+    - this repo should be in the root of the this repo
+3. Build the container in `docker/bench` using `build-bench-image.sh` script
+    - Make sure the version of mpi from inside the container is the same one running in the cluster
+4. Build the simulation running from inside the container the script `scripts/build_simulation.sh`
+    - you can use `singularity shell docker/images/bench.sif` to activate the container
+5. Run the files in experiment_code to get the results
