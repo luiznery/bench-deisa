@@ -142,7 +142,7 @@ def run_analytics(node, total_dask_workers: int, deisa_path: str, analytics_py_f
 
     py_cmd = (
         f'export PYTHONPATH={deisa_path}:$PYTHONPATH; '
-        f'python3 {analytics_py_file} {total_dask_workers} {scheduler_file} > {output_dir}analytics.e 2>&1'
+        f'python3 {analytics_py_file} {total_dask_workers} {scheduler_file} {output_dir} > {output_dir}analytics.e 2>&1'
     )
     analytics_cmd = (
         f'singularity exec {path_to_sif_file} bash -c "{py_cmd}"'

@@ -21,12 +21,13 @@ from pprint import pformat
 import matplotlib.pyplot as plt
 
 # Initialize Deisa
-if len(sys.argv) < 3:
-    raise Exception("[Analytics] Number of dask workers not set. Usage: python3 bench_deisa.py <n_dask_workers> <scheduler_file_name>")
+if len(sys.argv) < 4:
+    raise Exception("[Analytics] Number of dask workers not set. Usage: python3 bench_deisa.py <n_dask_workers> <scheduler_file_name> <output_dir>")
 else:
     nb_workers = int(sys.argv[1])
     scheduler_file_name=str(sys.argv[2])
-    print(f"[Analytics] parameters: dask workers - {nb_workers}, schedueler_file - {scheduler_file_name}", flush=True)
+    output_dir = str(sys.argv[3])
+    print(f"[Analytics] parameters: dask workers - {nb_workers}, schedueler_file - {scheduler_file_name}, output_dir - {output_dir}", flush=True)
 
 deisa = Deisa(scheduler_file_name=scheduler_file_name, 
               nb_workers=nb_workers,
@@ -73,7 +74,7 @@ iv = 3
 iw = 4
 ms = MemorySampler()
 
-with performance_report(filename="dask-report.html"), dask.config.set(
+with performance_report(filename=f"{output_dir}dask-report.html"), dask.config.set(
     array_optimize=None
 ), ms.sample("collection 1"):
     ekin_deisa = (
@@ -134,8 +135,8 @@ with performance_report(filename="dask-report.html"), dask.config.set(
 l1 = client.run(lambda dask_worker: dask_worker.transfer_outgoing_log)
 l2 = client.run(lambda dask_worker: dask_worker.transfer_incoming_log)
 
-with open("outgoing.txt", "w") as f1, open("incoming.txt", "w") as f2, open(
-    "results.txt", "w"
+with open(f"{output_dir}outgoing.txt", "w") as f1, open(f"{output_dir}incoming.txt", "w") as f2, open(
+    f"{output_dir}results.txt", "w"
 ) as f3:
     f1.write(pformat(l1))
     f2.write(pformat(l2))
@@ -145,7 +146,7 @@ res = ms.plot(align=True)
 if isinstance(res, plt.Axes):
     res = res.get_figure()
 
-res.savefig("plot.png")
+res.savefig(f"{output_dir}plot.png")
 
 print("[Analytics] Done ", flush=True)
 # deisa.wait_for_last_bridge_and_shutdown()
