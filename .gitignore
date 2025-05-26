@@ -14,3 +14,4 @@ venv*/*
 *.html
 *.png
 *.pyc
+*scheduler.json
