@@ -3,6 +3,7 @@ import execo_g5k
 import time
 import os
 import configparser
+import re
 
 def get_configs(config_file):
     """ 
@@ -19,6 +20,21 @@ def get_configs(config_file):
             configs[key] = value
 
     return configs
+
+def extract_scheduler_path(filename):
+    """
+    Reads the given file and returns the path following 'scheduler_info:'.
+    Returns None if no match is found.
+    """
+    pattern = re.compile(r'scheduler_info:\s+(\S+)')
+    
+    with open(filename, 'r') as file:
+        for line in file:
+            match = pattern.search(line)
+            if match:
+                return match.group(1)
+    
+    return None  # if no match is found
 
 
 def alloc_nodes(nb_reserved_nodes: int, walltime: int):
