@@ -9,16 +9,11 @@ from experiment import *
 HOME_DIR = os.path.expanduser("~")
 
 PATH_TO_SIF_FILE = HOME_DIR + "/bench/docker/images/bench.sif"
-# PDI_DEISA_YML = HOME_DIR + "/bench/simulation/io_deisa.yml"
 SIM_EXECUTABLE = HOME_DIR + "/bench/simulation/build/main"
 DEISA_PATH = HOME_DIR + "/bench/deisa/"
 ANALYTICS_PY_FILE = HOME_DIR + "/bench/in-situ/bench_deisa.py"
-# SCHEDULER_FILE = HOME_DIR + "/bench/experiment/scheduler.json" # must be in the same directory as the script/notebook
-SCHEDULER_PATH = HOME_DIR + "/bench/experiment/"
+SCHEDULER_PATH = HOME_DIR + "/bench/experiment_result/"
 DEISA_PATH = HOME_DIR + "/bench/deisa/"
-
-# SIMULATION_INI = HOME_DIR + "/bench/experiment_code/setup_strong.ini"
-# OUTPUT_DIR = HOME_DIR + "/bench/experiment/"
 
 
 def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, dask_workers_per_node=1, 
@@ -48,7 +43,7 @@ def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, 
         raise ValueError("total_dask_workers must be less than or equal to nb_reserved_nodes - 1")
 
     exp_name = f"{name}:{nb_reserved_nodes}:{s_ini_file.split('/')[-1].split('.')[0]}"
-    output_dir = HOME_DIR + f"/bench/experiment/{exp_name}/"
+    output_dir = HOME_DIR + f"/bench/experiment_result/{exp_name}/"
 
     #create output directory if it does not exist
     if not os.path.exists(output_dir):

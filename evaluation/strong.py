@@ -7,7 +7,7 @@ experiment_ids = ['1748275656', '1748277095']
 
 experiment_dirs = []
 for _dir in experiment_ids:
-    experiment_dirs.extend(glob.glob(f"../experiment/*{_dir}*"))
+    experiment_dirs.extend(glob.glob(f"../experiment_result/*{_dir}*"))
 print(f"Found experiment directories: {experiment_dirs}")
 
 
@@ -17,7 +17,7 @@ for d in experiment_dirs:
     id = name.split("_")[-1]
     total_nodes = d.split("/")[-1].split(":")[1]
 
-    res_file = f"../experiment/{d}/analytics.e"
+    res_file = f"../experiment_result/{d}/analytics.e"
     
     data = []
     with open(res_file, "r") as f:
