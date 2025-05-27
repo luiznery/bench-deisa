@@ -20,19 +20,23 @@ if [ -n "$1" ]; then
     BASE_TIME=$1
 fi
 
-NODE_COUNTS=(4)
+NODES=4
+PROBLEM_SIZE=1
+MPI_PROCESSES=(1 2 4)
 
-for NODES in "${NODE_COUNTS[@]}"; do
+for NP in "${MPI_PROCESSES[@]}"; do
     SI_PATH="${BASE_SI}/${NODES}/strong_${NODES}.ini"
     PD_PATH="${BASE_PD}/${NODES}/io_deisa.yml"
 
     $BASE_SCRIPT \
         -n $((NODES + 1)) \
-        -si "$SI_PATH" \
-        -pd "$PD_PATH" \
+        -np $NP \
+        -ps $PROBLEM_SIZE \
         -nm "$NAME" \
         -t $BASE_TIME \
-        -dw $DW &
+        -dw $DW \
+        -m \
+        & \
 
     sleep 1  # Small delay to avoid collisions
 done
