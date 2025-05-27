@@ -2,6 +2,7 @@ import execo_g5k
 import os
 import socket
 import time
+import math
 
 from experiment import *
 
@@ -42,18 +43,7 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
     if total_dask_workers is None:
         total_dask_workers = reserved_nodes - 1
     elif total_dask_workers > reserved_nodes - 1:
-        raise ValueError("total_dask_workers must be less than or equal to reserved_nodes - 1")
-
-    exp_name = f"{name}:{reserved_nodes}:{s_ini_file.split('/')[-1].split('.')[0]}"
-    output_dir = HOME_DIR + f"/bench/experiment_result/{exp_name}/"
-
-    #create output directory if it does not exist
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    else:
-        raise FileExistsError(
-            f"Output directory {output_dir} already exists. Please remove it or choose a different name.")
-    
+        raise ValueError("total_dask_workers must be less than or equal to reserved_nodes - 1")   
     
     scheduler_file = extract_scheduler_path(pdi_deisa_yml)
     if scheduler_file is None:
@@ -148,17 +138,79 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
             print(f"[{exp_name}] Scheduler file {scheduler_file} deleted!")
 
 
+
+def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
+    if problem_size < 1:
+        raise ValueError("problem_size must be greater than or equal to 1")
+    # base values
+    nx=64
+    ny=64
+    nz=32
+    for i in range(1,problem_size):
+        if i%2 == 1:
+            nx *= 2
+        else:
+            ny *= 2
+
+    mx = 1
+    my = 1
+    mz = 1
+    log_n_mpi = math.log2(mpi_np)
+    if not log_n_mpi.is_integer():
+        raise ValueError("mpi_np must be a power of 2")
+    log_n_mpi = int(log_n_mpi)
+    for i in range(log_n_mpi):
+        if i%2 == 0:
+            mx *= 2
+        else:
+            my *= 2
+
+    #write the simulation ini file in output_dir
+    simulation_ini_file = output_dir + f"{mpi_np}_{problem_size}.ini"
+    T_END_VAR = 10
+    N_STEP_MAX_VAR=500
+    #read the template ini file
+    template_ini_file = HOME_DIR + "/bench/experiment_code/templates/template.ini"
+    with open(template_ini_file, "r") as f:
+        template_content = f.read()
+    #replace the variables in the template with the values
+    template_content = template_content.replace("<T_END_VAR>", str(int(T_END_VAR)))
+    template_content = template_content.replace("<N_STEP_MAX_VAR>", str(int(N_STEP_MAX_VAR)))
+    template_content = template_content.replace("<NX_VAR>", str(int(nx)))
+    template_content = template_content.replace("<NY_VAR>", str(int(ny)))
+    template_content = template_content.replace("<NZ_VAR>", str(int(nz)))
+    template_content = template_content.replace("<MX_VAR>", str(int(mx)))
+    template_content = template_content.replace("<MY_VAR>", str(int(my)))
+    template_content = template_content.replace("<MZ_VAR>", str(int(mz)))
+    with open(simulation_ini_file, "w") as f:
+        f.write(template_content)
+    
+    #write the PDI DEISA YAML file in output_dir
+    pdi_deisa_yml_file = output_dir + f"{mpi_np}_{problem_size}.yml"
+    #read the template yaml file
+    template_yml_file = HOME_DIR + "/bench/experiment_code/templates/template.yml"
+    with open(template_yml_file, "r") as f:
+        template_content = f.read()
+    #replace the variables in the template with the values
+    SCHEDULER_INFO_VAR = output_dir + "scheduler.json"
+    template_content = template_content.replace("<SCHEDULER_INFO_VAR>", SCHEDULER_INFO_VAR)
+    with open(pdi_deisa_yml_file, "w") as f:
+        f.write(template_content)
+    
+    return simulation_ini_file, pdi_deisa_yml_file
+
+
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Run strong scaling experiment.")
     parser.add_argument("--reserved_nodes","-n", type=int, required=True, 
                         help="Number of reserved nodes (including head node).")
+    parser.add_argument("--mpi_np", "-np", type=int, required=True,
+                        help="Number of MPI processes to run in the simulation.")
+    parser.add_argument("--problem_size", "-ps", type=int, required=True,
+                        help="Problem size for the simulation.")
     parser.add_argument("--name", "-nm", type=str, required=True, help="Name of the experiment.")
-    parser.add_argument("--simulation_ini_file", "-si", type=str, required=True,
-                        help="Path to the simulation ini file.")
-    parser.add_argument("--pdi_deisa_yml", "-pd", type=str, required=True,
-                        help="Path to the PDI DEISA YAML file.")
     parser.add_argument("--walltime", "-t",type=int, default=10*60, help="Walltime in seconds (default: 600).")
     parser.add_argument("--dask_workers_per_node","-dw", type=int, default=1, 
                         help="Number of Dask workers per node (default: 1).")
@@ -169,9 +221,20 @@ if __name__ == "__main__":
     if args.total_dask_workers is None:
         args.total_dask_workers = args.reserved_nodes - 1
 
+    exp_name = f"{args.name}:{args.reserved_nodes}:{args.mpi_np}:{args.problem_size}"
+    output_dir = HOME_DIR + f"/bench/experiment_result/{exp_name}/"
+    if not os.path.exists(output_dir): #create output directory if it does not exist
+        os.makedirs(output_dir)
+    else:
+        raise FileExistsError(
+            f"Output directory {output_dir} already exists. Please remove it or choose a different name.")
+    
+    #Create the simulation ini file and PDI DEISA YAML file
+    simulation_ini_file,pdi_deisa_yml_file = produce_config_files(output_dir, args.mpi_np, args.problem_size)
+
     run_experiment(reserved_nodes=args.reserved_nodes, 
-                   s_ini_file=args.simulation_ini_file,
-                   pdi_deisa_yml=args.pdi_deisa_yml,
+                   s_ini_file=simulation_ini_file,
+                   pdi_deisa_yml=pdi_deisa_yml_file,
                    name=args.name,
                    walltime=args.walltime,
                    dask_workers_per_node=args.dask_workers_per_node,
