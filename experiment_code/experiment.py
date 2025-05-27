@@ -175,8 +175,8 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
         path_to_sif_file (str): Path to the Singularity image file.
     """
     
-    host_list = ",".join([f"{node.address}" for node in nodes])
-    # host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
+    # host_list = ",".join([f"{node.address}" for node in nodes])
+    host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
     # host_list = ",".join([f"{node.address}" for node in nodes])
 
     simulation_cmd = (
@@ -207,3 +207,37 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
     mpi_process.start()
 
     return mpi_process
+
+def run_monitor(nodes: list, output_dir: str, interval: int, path_to_sif_file: str, path_to_monitor_file: str) -> execo.SshProcess:
+    """
+    Run the monitor script in the given nodes.
+
+    Arguments:
+        nodes (list): List of nodes where the monitor will be run.
+        output_dir (str): Directory where the output files will be saved.
+        interval (int): Interval in seconds for monitoring.
+        path_to_sif_file (str): Path to the Singularity image file.
+        path_to_monitor_file (str): Path to the monitor Python file.
+    """
+    monitoring_processes = []
+    for i in range(len(nodes)):
+        node = nodes[i]
+        
+        if i == 0:
+            log_file = output_dir + "monitor_head_" + node.address
+        else:
+            log_file = output_dir + "monitor_node_" + node.address
+        
+        monitor_cmd = (
+            f'singularity exec {path_to_sif_file} '
+            f'bash -c "python {path_to_monitor_file} {log_file} {interval}"'
+        )
+        monitor_process = execo.SshProcess(
+            monitor_cmd,
+            node,
+        )
+        monitor_process.start()
+        monitoring_processes.append(monitor_process)
+        
+    return monitoring_processes
+

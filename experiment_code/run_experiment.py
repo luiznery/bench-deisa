@@ -15,10 +15,11 @@ DEISA_PATH = HOME_DIR + "/bench/deisa/"
 ANALYTICS_PY_FILE = HOME_DIR + "/bench/in-situ/bench_deisa.py"
 SCHEDULER_PATH = HOME_DIR + "/bench/experiment_result/"
 DEISA_PATH = HOME_DIR + "/bench/deisa/"
+PATH_TO_MONITOR_FILE = HOME_DIR + "/bench/experiment_code/monitor.py"
 
 
 def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, 
-                   dask_workers_per_node=1, total_dask_workers=None):
+                   dask_workers_per_node=1, total_dask_workers=None, monitoring=False):
     """
     Run experiment with the given parameters.
 
@@ -68,6 +69,12 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
 
         # print(f"[{exp_name}] Total simulation cores: {total_simulation_cores}")
 
+        # Run monitoring if enabled
+        if monitoring:
+            print(f"[{exp_name}] Monitoring enabled. Starting monitoring process...")
+            monitor_processes = run_monitor([head_node]+nodes, output_dir, 1, PATH_TO_SIF_FILE, PATH_TO_MONITOR_FILE)
+            print(f"[{exp_name}] Monitoring process started!")
+
         # Read the simulation configuration file
         configs = get_configs(s_ini_file)
 
@@ -116,6 +123,13 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         print(f"[{exp_name}] Waiting for the analytics to finish...")
         analytics_process.wait()
         print(f"[{exp_name}] Analytics finished!")
+
+        if monitoring:
+            #kill the monitoring processes
+            print(f"[{exp_name}] Stopping monitoring processes...")
+            for monitor_process in monitor_processes:
+                monitor_process.kill()
+            print(f"[{exp_name}] Monitoring processes stopped!")
 
         mpi_process_stats = mpi_process.stats()
         analytics_process_stats = analytics_process.stats()
@@ -216,6 +230,8 @@ if __name__ == "__main__":
                         help="Number of Dask workers per node (default: 1).")
     parser.add_argument("--total_dask_workers", "-tw", type=int, default=None,
                         help="Total number of Dask workers (default: None, which means reserved_nodes - 1).")
+    parser.add_argument("--monitoring", "-m", action="store_true", 
+                        help="Enable monitoring of the experiment (default: False).")
     args = parser.parse_args()
 
     if args.total_dask_workers is None:
@@ -238,4 +254,5 @@ if __name__ == "__main__":
                    name=args.name,
                    walltime=args.walltime,
                    dask_workers_per_node=args.dask_workers_per_node,
-                   total_dask_workers=args.total_dask_workers)
+                   total_dask_workers=args.total_dask_workers,
+                   monitoring=args.monitoring)
