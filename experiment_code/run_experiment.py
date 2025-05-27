@@ -143,7 +143,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Run strong scaling experiment.")
-    parser.add_argument("--nb_reserved_nodes","-nb", type=int, required=True, 
+    parser.add_argument("--reserved_nodes","-n", type=int, required=True, 
                         help="Number of reserved nodes (including head node).")
     parser.add_argument("--name", "-nm", type=str, required=True, help="Name of the experiment.")
     parser.add_argument("--simulation_ini_file", "-si", type=str, required=True,

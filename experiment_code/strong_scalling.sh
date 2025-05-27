@@ -27,7 +27,7 @@ for NODES in "${NODE_COUNTS[@]}"; do
     PD_PATH="${BASE_PD}/${NODES}/io_deisa.yml"
 
     $BASE_SCRIPT \
-        -nb $((NODES + 1)) \
+        -n $((NODES + 1)) \
         -si "$SI_PATH" \
         -pd "$PD_PATH" \
         -nm "$NAME" \

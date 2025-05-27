@@ -29,7 +29,7 @@ for PROBLEM in "${PROBLEM_SIZES[@]}"; do
     PD_PATH="${BASE_PD}/${PROBLEM}/io_deisa.yml"
 
     $BASE_SCRIPT \
-        -nb 17 \
+        -n 17 \
         -si "$SI_PATH" \
         -pd "$PD_PATH" \
         -nm "$NAME" \
