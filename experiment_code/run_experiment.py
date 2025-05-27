@@ -125,6 +125,13 @@ def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, 
         analytics_process.wait()
         print(f"[{exp_name}] Analytics finished!")
 
+        mpi_process_stats = mpi_process.stats()
+        analytics_process_stats = analytics_process.stats()
+        with open(output_dir + "mpi_process_stats.txt", "w") as f_mpi, \
+             open(output_dir + "analytics_process_stats.txt", "w") as f_analytics:
+            f_mpi.write(str(mpi_process_stats))
+            f_analytics.write(str(analytics_process_stats))
+
     except Exception as e:
         print(f"[{exp_name}] An error occurred: {e}")
 
