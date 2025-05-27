@@ -175,7 +175,8 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
         path_to_sif_file (str): Path to the Singularity image file.
     """
     
-    host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
+    host_list = ",".join([f"{node.address}" for node in nodes])
+    # host_list = ",".join([f"{node.address}:{cores_per_node}" for node in nodes])
     # host_list = ",".join([f"{node.address}" for node in nodes])
 
     simulation_cmd = (
@@ -191,9 +192,10 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
         'export OMP_NUM_THREADS=2; '
         'export OMP_PROC_BIND=spread; '
         'export OMP_PLACES=threads; '
-        f"mpirun -np {mpi_np} "
-        f"--map-by slot "
+        'mpirun '
         f"--host {host_list} "
+        f"--map-by node "
+        f"-np {mpi_np} "
         f'singularity exec {path_to_sif_file} bash -c "{simulation_cmd}" '
         f'> {output_dir}simulation.e 2>&1'
     )
