@@ -8,7 +8,7 @@ cleanup() {
 
 trap cleanup SIGINT
 
-BASE_SCRIPT="python strong_scalling.py"
+BASE_SCRIPT="python run_experiment.py"
 BASE_PD="/home/lmascare/bench/experiment_code/strong"
 BASE_SI="$BASE_PD"
 NAME="strong_$(date +%s)"
