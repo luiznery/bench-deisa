@@ -16,20 +16,22 @@ SCHEDULER_PATH = HOME_DIR + "/bench/experiment_result/"
 DEISA_PATH = HOME_DIR + "/bench/deisa/"
 
 
-def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, dask_workers_per_node=1, 
-                   total_dask_workers=None):
+def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, 
+                   dask_workers_per_node=1, total_dask_workers=None):
     """
     Run experiment with the given parameters.
 
     Arguments:
-        nb_reserved_nodes (int): Total number of nodes to reserve, including the head node.
-        exp_name (str): Name of the experiment.
+        reserved_nodes (int): Total number of nodes to reserve, including the head node.
+        s_ini_file (str): Path to the simulation ini file.
+        pdi_deisa_yml (str): Path to the PDI DEISA YAML file.
+        name (str): Name of the experiment.
         walltime (int): Walltime for the reservation in seconds.
         dask_workers_per_node (int): Number of Dask workers per node.
-        total_dask_workers (int, optional): Total number of Dask workers. If None, it will be nb_reserved_nodes - 1.
+        total_dask_workers (int, optional): Total number of Dask workers. If None, it will be reserved_nodes - 1.
     """
-    if nb_reserved_nodes < 2:
-        raise ValueError("nb_reserved_nodes must be greater than or equal to 2")
+    if reserved_nodes < 2:
+        raise ValueError("reserved_nodes must be greater than or equal to 2")
     
     if walltime <= 0:
         raise ValueError("walltime must be greater than 0")
@@ -38,11 +40,11 @@ def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, 
         raise ValueError("dask_workers_per_node must be greater than or equal to 1")
     
     if total_dask_workers is None:
-        total_dask_workers = nb_reserved_nodes - 1
-    elif total_dask_workers > nb_reserved_nodes - 1:
-        raise ValueError("total_dask_workers must be less than or equal to nb_reserved_nodes - 1")
+        total_dask_workers = reserved_nodes - 1
+    elif total_dask_workers > reserved_nodes - 1:
+        raise ValueError("total_dask_workers must be less than or equal to reserved_nodes - 1")
 
-    exp_name = f"{name}:{nb_reserved_nodes}:{s_ini_file.split('/')[-1].split('.')[0]}"
+    exp_name = f"{name}:{reserved_nodes}:{s_ini_file.split('/')[-1].split('.')[0]}"
     output_dir = HOME_DIR + f"/bench/experiment_result/{exp_name}/"
 
     #create output directory if it does not exist
@@ -60,7 +62,7 @@ def run_experiment(nb_reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, 
 
     try:
         # Alloc the nodes
-        jobs = alloc_nodes(nb_reserved_nodes, walltime)
+        jobs = alloc_nodes(reserved_nodes, walltime)
         job_id, site = jobs[0]
 
         print(f"[{exp_name}] Job {job_id} reserved on site {site}")
@@ -161,13 +163,13 @@ if __name__ == "__main__":
     parser.add_argument("--dask_workers_per_node","-dw", type=int, default=1, 
                         help="Number of Dask workers per node (default: 1).")
     parser.add_argument("--total_dask_workers", "-tw", type=int, default=None,
-                        help="Total number of Dask workers (default: None, which means nb_reserved_nodes - 1).")
+                        help="Total number of Dask workers (default: None, which means reserved_nodes - 1).")
     args = parser.parse_args()
 
     if args.total_dask_workers is None:
-        args.total_dask_workers = args.nb_reserved_nodes - 1
+        args.total_dask_workers = args.reserved_nodes - 1
 
-    run_experiment(nb_reserved_nodes=args.nb_reserved_nodes, 
+    run_experiment(reserved_nodes=args.reserved_nodes, 
                    s_ini_file=args.simulation_ini_file,
                    pdi_deisa_yml=args.pdi_deisa_yml,
                    name=args.name,
