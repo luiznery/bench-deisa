@@ -12,10 +12,15 @@ BASE_SCRIPT="python run_experiment.py"
 BASE_PD="/home/lmascare/bench/experiment_code/strong"
 BASE_SI="$BASE_PD"
 NAME="strong_$(date +%s)"
-BASE_TIME=600
 DW=1
 
-NODE_COUNTS=(16 8 4 2 1)
+BASE_TIME=6000 # 1 hour in seconds
+# Keeps last value if no argument is provided
+if [ -n "$1" ]; then
+    BASE_TIME=$1
+fi
+
+NODE_COUNTS=(4)
 
 for NODES in "${NODE_COUNTS[@]}"; do
     SI_PATH="${BASE_SI}/${NODES}/strong_${NODES}.ini"

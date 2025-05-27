@@ -12,8 +12,15 @@ BASE_SCRIPT="python run_experiment.py"
 BASE_PD="/home/lmascare/bench/experiment_code/weak"
 BASE_SI="$BASE_PD"
 NAME="weak_$(date +%s)"
-BASE_TIME=900
 DW=1
+
+BASE_TIME=6000 # 1 hour in seconds
+# Keeps last value if no argument is provided
+if [ -n "$1" ]; then
+    BASE_TIME=$1
+fi
+
+NODE_COUNTS=(4)
 
 PROBLEM_SIZES=(1 2)
 
