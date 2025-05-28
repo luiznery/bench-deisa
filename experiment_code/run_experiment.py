@@ -157,11 +157,11 @@ def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
     if problem_size < 1:
         raise ValueError("problem_size must be greater than or equal to 1")
     # base values
-    nx=64
-    ny=64
+    nx=128
+    ny=128
     nz=32
-    for i in range(1,problem_size):
-        if i%2 == 1:
+    for i in range(problem_size):
+        if i%2 == 0:
             nx *= 2
         else:
             ny *= 2
