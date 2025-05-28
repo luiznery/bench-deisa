@@ -77,6 +77,7 @@ ms = MemorySampler()
 with performance_report(filename=f"{output_dir}dask-report.html"), dask.config.set(
     array_optimize=None
 ), ms.sample("collection 1"):
+    print(f"[Analytics] starting computation at {time.time()}", flush=True)
     ekin_deisa = (
         0.5
         * slice[:, id, :, :]
