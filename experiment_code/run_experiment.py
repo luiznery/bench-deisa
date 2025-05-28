@@ -19,7 +19,7 @@ PATH_TO_MONITOR_FILE = HOME_DIR + "/bench/experiment_code/monitor.py"
 
 
 def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, 
-                   dask_workers_per_node=1, total_dask_workers=None, monitoring=False):
+                   dask_workers_per_node=1, total_dask_workers=None, omp_num_threads=1,monitoring=False):
     """
     Run experiment with the given parameters.
 
@@ -113,7 +113,7 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         assert mpi_np <= total_simulation_cores, "mpi_np must be less than or equal to total_simulation_cores"
         print(f"[{exp_name}] Running simulation with {mpi_np} MPI processes")
         mpi_process = run_simulation(head_node, nodes, mpi_np, cores_per_node, DEISA_PATH, SIM_EXECUTABLE, s_ini_file, 
-                            pdi_deisa_yml, output_dir, PATH_TO_SIF_FILE)
+                            pdi_deisa_yml, output_dir, PATH_TO_SIF_FILE, omp_num_threads)
         print(f"[{exp_name}] Simulation started!")
 
         # Waiting for everything to finish
@@ -232,6 +232,8 @@ if __name__ == "__main__":
                         help="Total number of Dask workers (default: None, which means reserved_nodes - 1).")
     parser.add_argument("--monitoring", "-m", action="store_true", 
                         help="Enable monitoring of the experiment (default: False).")
+    parser.add_argument("--omp_num_threads", "-omp", type=int, default=1,
+                        help="Number of OpenMP threads to use in the simulation (default: 1).")
     args = parser.parse_args()
 
     if args.total_dask_workers is None:
@@ -255,4 +257,5 @@ if __name__ == "__main__":
                    walltime=args.walltime,
                    dask_workers_per_node=args.dask_workers_per_node,
                    total_dask_workers=args.total_dask_workers,
+                   omp_num_threads=args.omp_num_threads,
                    monitoring=args.monitoring)

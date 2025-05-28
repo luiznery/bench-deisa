@@ -52,6 +52,8 @@ def alloc_nodes(nb_reserved_nodes: int, walltime: int):
         [
             (
                 execo_g5k.OarSubmission(f"nodes={nb_reserved_nodes}", walltime=walltime),
+                                        # job_type="exotic",
+                                        # sql_properties="yeti",
                 "grenoble",
             )
         ]
@@ -158,7 +160,7 @@ def run_analytics(node, total_dask_workers: int, deisa_path: str, analytics_py_f
 
 def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, deisa_path, 
                    sim_executable: str, simulation_ini: str, pdi_deisa_yml: str, output_dir: str, 
-                   path_to_sif_file: str) -> execo.SshProcess:
+                   path_to_sif_file: str, omp_num_threads=1) -> execo.SshProcess:
     """
     Run the simulation in the given nodes.
 
@@ -180,7 +182,7 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
     # host_list = ",".join([f"{node.address}" for node in nodes])
 
     simulation_cmd = (
-        'export OMP_NUM_THREADS=2; '
+        f'export OMP_NUM_THREADS={omp_num_threads}; '
         'export OMP_PROC_BIND=spread; '
         'export OMP_PLACES=threads; '
         f'export PYTHONPATH={deisa_path}:$PYTHONPATH; '
@@ -189,9 +191,6 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
 
     # Build the command with two singularity exec calls:
     mpi_cmd = (
-        'export OMP_NUM_THREADS=2; '
-        'export OMP_PROC_BIND=spread; '
-        'export OMP_PLACES=threads; '
         'mpirun '
         f"--host {host_list} "
         f"--map-by node "
