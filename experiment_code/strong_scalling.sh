@@ -20,9 +20,13 @@ if [ -n "$1" ]; then
     BASE_TIME=$1
 fi
 
-NODES=4
-PROBLEM_SIZE=1
-MPI_PROCESSES=(1 2 4)
+NODES=1
+PROBLEM_SIZE=2
+
+MPI_PROCESSES=(32)
+if [ -n "$2" ]; then
+    IFS=',' read -r -a MPI_PROCESSES <<< "$2"
+fi
 
 for NP in "${MPI_PROCESSES[@]}"; do
     SI_PATH="${BASE_SI}/${NODES}/strong_${NODES}.ini"
