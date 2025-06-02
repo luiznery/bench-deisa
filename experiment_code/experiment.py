@@ -112,6 +112,7 @@ def run_workers(nodes, head_node_ip: str, dask_workers_per_node: int, scheduler_
         f"tcp://{head_node_ip}:8786 "
         # f"--dashboard-address {head_node.address}:8787 "
         f"--nworkers {dask_workers_per_node} "
+        "--memory-limit 28GB "
         "--nthreads 1 "
         "--local-directory /tmp "
         f"--scheduler-file {scheduler_file} "
