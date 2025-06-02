@@ -24,7 +24,6 @@ try:
         mem_usage = mem.percent
 
         log_line = f"{timestamp},{unix_time},{hostname},{cpu_usage},{mem_usage}\n"
-        print(log_line)
         f.write(log_line)
         f.flush()  # ensure data is written immediately
 except KeyboardInterrupt:
