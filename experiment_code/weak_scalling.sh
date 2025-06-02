@@ -9,8 +9,6 @@ cleanup() {
 trap cleanup SIGINT
 
 BASE_SCRIPT="python run_experiment.py"
-BASE_PD="/home/lmascare/bench/experiment_code/weak"
-BASE_SI="$BASE_PD"
 NAME="weak_$(date +%s)"
 DW=1
 
@@ -20,24 +18,35 @@ if [ -n "$1" ]; then
     BASE_TIME=$1
 fi
 
-NODE_COUNTS=(4)
+MPI_PROCESSES=32
+if [ -n "$2" ]; then
+    MPI_PROCESSES=$2
+fi
 
-PROBLEM_SIZES=(1 2)
+PROBLEM_SIZE=2
+if [ -n "$3" ]; then
+    PROBLEM_SIZE=$3
+fi
 
-for PROBLEM in "${PROBLEM_SIZES[@]}"; do
-    SI_PATH="${BASE_SI}/${PROBLEM}/weak_${PROBLEM}.ini"
-    PD_PATH="${BASE_PD}/${PROBLEM}/io_deisa.yml"
+NODES=1
+if [ -n "$4" ]; then
+    NODES=$4
+fi
 
-    $BASE_SCRIPT \
-        -n 17 \
-        -si "$SI_PATH" \
-        -pd "$PD_PATH" \
-        -nm "$NAME" \
-        -t $BASE_TIME \
-        -dw $DW &
+OMP_THREADS=1
 
-    sleep 1  # Small delay to avoid collisions
-done
+$BASE_SCRIPT \
+    -n $((NODES + 1)) \
+    -np $MPI_PROCESSES \
+    -ps $PROBLEM_SIZE \
+    -nm "$NAME" \
+    -t $BASE_TIME \
+    -dw $DW \
+    -omp_t $OMP_THREADS \
+    -m \
+    & \
+
+sleep 1  # Small delay to avoid collisions
 
 wait
 echo "All experiments completed."

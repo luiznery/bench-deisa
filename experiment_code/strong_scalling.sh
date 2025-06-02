@@ -21,14 +21,18 @@ if [ -n "$1" ]; then
 fi
 
 NODES=1
-PROBLEM_SIZE=2
+PROBLEM_SIZE=0
 
 MPI_PROCESSES=(32)
 if [ -n "$2" ]; then
     IFS=',' read -r -a MPI_PROCESSES <<< "$2"
 fi
 
+
+
 for NP in "${MPI_PROCESSES[@]}"; do
+    OMP_THREADS=1
+
     SI_PATH="${BASE_SI}/${NODES}/strong_${NODES}.ini"
     PD_PATH="${BASE_PD}/${NODES}/io_deisa.yml"
 
@@ -39,6 +43,7 @@ for NP in "${MPI_PROCESSES[@]}"; do
         -nm "$NAME" \
         -t $BASE_TIME \
         -dw $DW \
+        -omp_t $OMP_THREADS \
         -m \
         & \
 
