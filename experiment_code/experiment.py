@@ -190,6 +190,8 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
         f'pdirun {sim_executable} {simulation_ini} {pdi_deisa_yml} --kokkos-map-device-id-by=mpi_rank '
     )
 
+    print(f"Running simulation command: {simulation_cmd}")
+
     # Build the command with two singularity exec calls:
     mpi_cmd = (
         'mpirun '
