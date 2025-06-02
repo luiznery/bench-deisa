@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import glob
 
 
-experiment_ids = ['strong_1748863610:2:8:0','strong_1748863606:2:4:0','strong_1748863600:2:2:0','strong_1748863539:2:1:0','strong_1748863616:2:16:0','strong_1748863691:2:32:0']
+experiment_ids = ['weak_1748863919:2:4:2','weak_1748863828:2:2:1','weak_1748863788:2:1:0','weak_1748863964:2:8:3']
 
 # Find all directories that match the experiment IDs
 experiment_dirs = []
@@ -128,7 +128,7 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.xticks(df["mpi_processes"], rotation=45)
 plt.xlabel("Number of MPI Processes")
 plt.ylabel("Time (seconds)")
-plt.savefig("imgs/strong_simulation_time_vs_processes.png")
+plt.savefig("imgs/weak_simulation_time_vs_processes.png")
 
 # MPI Processes vs Analytics Time
 plt.figure(figsize=(10, 6))
@@ -143,7 +143,7 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.xticks(df["mpi_processes"], rotation=45)
 plt.xlabel("Number of MPI Processes")
 plt.ylabel("Time (seconds)")
-plt.savefig("imgs/strong_simulation_analytics_time_vs_processes.png")
+plt.savefig("imgs/weak_simulation_analytics_time_vs_processes.png")
 
 # MPI Processes vs Total Analytics Time
 plt.figure(figsize=(10, 6))
@@ -158,7 +158,7 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.xticks(df["mpi_processes"], rotation=45)
 plt.xlabel("Number of MPI Processes")
 plt.ylabel("Time (seconds)")
-plt.savefig("imgs/strong_analytics_time_vs_processes.png")    
+plt.savefig("imgs/weak_analytics_time_vs_processes.png")    
 
 
 monitor_df["mpi_processes"] = monitor_df["exec_id"].apply(
@@ -186,7 +186,7 @@ for mpi_p in monitor_df["mpi_processes"].unique():
     sorted_labels, sorted_handles = zip(*sorted_handles_labels)
     plt.legend(sorted_handles, sorted_labels)
 
-    plt.savefig(f"imgs/strong_cpu_vs_time_{mpi_p}.png")
+    plt.savefig(f"imgs/weak_cpu_vs_time_{mpi_p}.png")
 
     # Memory Usage vs Time for each node
     plt.figure(figsize=(10, 6))
@@ -207,5 +207,5 @@ for mpi_p in monitor_df["mpi_processes"].unique():
     sorted_labels, sorted_handles = zip(*sorted_handles_labels)
     plt.legend(sorted_handles, sorted_labels)
     
-    plt.savefig(f"imgs/strong_memory_vs_time_{mpi_p}.png")
+    plt.savefig(f"imgs/weak_memory_vs_time_{mpi_p}.png")
         
