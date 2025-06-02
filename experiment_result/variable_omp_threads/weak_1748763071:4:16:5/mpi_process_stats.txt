@@ -1,0 +1,1 @@
+{'name': 'mpirun --host dahu-22.grenoble.grid5...', 'start_date': 1748763348.7279716, 'end_date': 1748766129.734214, 'num_processes': 1, 'num_started': 1, 'num_ended': 1, 'num_errors': 0, 'num_timeouts': 0, 'num_forced_kills': 0, 'num_non_zero_exit_codes': 1, 'num_expect_fail': 0, 'num_write_error': 0, 'num_ok': 0, 'num_finished_ok': 0, 'sub_stats': []}
