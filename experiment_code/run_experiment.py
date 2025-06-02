@@ -69,6 +69,8 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
 
         # print(f"[{exp_name}] Total simulation cores: {total_simulation_cores}")
 
+        print(f"[{exp_name}] OMP_NUM_THREADS set to {omp_num_threads}")
+        
         # Run monitoring if enabled
         if monitoring:
             print(f"[{exp_name}] Monitoring enabled. Starting monitoring process...")
@@ -232,7 +234,7 @@ if __name__ == "__main__":
                         help="Total number of Dask workers (default: None, which means reserved_nodes - 1).")
     parser.add_argument("--monitoring", "-m", action="store_true", 
                         help="Enable monitoring of the experiment (default: False).")
-    parser.add_argument("--omp_num_threads", "-omp", type=int, default=1,
+    parser.add_argument("--omp_num_threads", "-omp_t", type=int, default=1,
                         help="Number of OpenMP threads to use in the simulation (default: 1).")
     args = parser.parse_args()
 
@@ -246,6 +248,10 @@ if __name__ == "__main__":
     else:
         raise FileExistsError(
             f"Output directory {output_dir} already exists. Please remove it or choose a different name.")
+    
+    print(f"[{exp_name}] Reserved Nodes: {args.reserved_nodes}")
+    print(f"[{exp_name}] MPI NP: {args.mpi_np}")
+    print(f"[{exp_name}] Problem Size: {args.problem_size}")
     
     #Create the simulation ini file and PDI DEISA YAML file
     simulation_ini_file,pdi_deisa_yml_file = produce_config_files(output_dir, args.mpi_np, args.problem_size)
