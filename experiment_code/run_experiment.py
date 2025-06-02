@@ -156,11 +156,11 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
 
 
 def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
-    if problem_size < 1:
+    if problem_size < 0:
         raise ValueError("problem_size must be greater than or equal to 1")
     # base values
-    nx=128
-    ny=128
+    nx=32
+    ny=32
     nz=32
     for i in range(problem_size):
         if i%2 == 0:
