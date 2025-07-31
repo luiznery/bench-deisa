@@ -112,10 +112,11 @@ def run_workers(nodes, head_node_ip: str, dask_workers_per_node: int, scheduler_
         f"tcp://{head_node_ip}:8786 "
         # f"--dashboard-address {head_node.address}:8787 "
         f"--nworkers {dask_workers_per_node} "
-        "--memory-limit 28GB "
+        "--memory-limit 45GB "
         "--nthreads 1 "
         "--local-directory /tmp "
         f"--scheduler-file {scheduler_file} "
+        ""
         f"> {output_dir}worker.e 2>&1"
     )
 
@@ -183,11 +184,8 @@ def run_simulation(head_node, nodes: list, mpi_np: int, cores_per_node: int, dei
     # host_list = ",".join([f"{node.address}" for node in nodes])
 
     simulation_cmd = (
-        f'export OMP_NUM_THREADS={omp_num_threads}; '
-        'export OMP_PROC_BIND=spread; '
-        'export OMP_PLACES=threads; '
         f'export PYTHONPATH={deisa_path}:$PYTHONPATH; '
-        f'pdirun {sim_executable} {simulation_ini} {pdi_deisa_yml} --kokkos-map-device-id-by=mpi_rank '
+        f'pdirun {sim_executable} {simulation_ini} {pdi_deisa_yml} ' #--kokkos-map-device-id-by=mpi_rank '
     )
 
     print(f"Running simulation command: {simulation_cmd}")

@@ -19,7 +19,7 @@ PATH_TO_MONITOR_FILE = HOME_DIR + "/bench/experiment_code/monitor.py"
 
 
 def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, name: str, walltime=10*60, 
-                   monitoring=False):
+                   dask_workers_per_node=1, total_dask_workers=None, omp_num_threads=1,monitoring=False):
     """
     Run experiment with the given parameters.
 
@@ -29,12 +29,27 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         pdi_deisa_yml (str): Path to the PDI DEISA YAML file.
         name (str): Name of the experiment.
         walltime (int): Walltime for the reservation in seconds.
+        dask_workers_per_node (int): Number of Dask workers per node.
+        total_dask_workers (int, optional): Total number of Dask workers. If None, it will be reserved_nodes - 1.
     """
     if reserved_nodes < 2:
         raise ValueError("reserved_nodes must be greater than or equal to 2")
     
     if walltime <= 0:
         raise ValueError("walltime must be greater than 0")
+    
+    if dask_workers_per_node < 1:
+        raise ValueError("dask_workers_per_node must be greater than or equal to 1")
+    
+    if total_dask_workers is None:
+        total_dask_workers = reserved_nodes - 1
+    elif total_dask_workers > reserved_nodes - 1:
+        raise ValueError("total_dask_workers must be less than or equal to reserved_nodes - 1")   
+    
+    scheduler_file = extract_scheduler_path(pdi_deisa_yml)
+    if scheduler_file is None:
+        raise FileNotFoundError(
+            f"Scheduler file not found in {pdi_deisa_yml}. Please check the file and try again.")
 
     try:
         # Alloc the nodes
@@ -53,6 +68,8 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         total_simulation_cores = cores_per_node * len(nodes)
 
         # print(f"[{exp_name}] Total simulation cores: {total_simulation_cores}")
+
+        print(f"[{exp_name}] OMP_NUM_THREADS set to {omp_num_threads}")
         
         # Run monitoring if enabled
         if monitoring:
@@ -71,13 +88,31 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         print(f"[{exp_name}] Head node IP: {head_node_ip}")
         print(f"[{exp_name}] Other nodes IPs: {nodes_ips}")
 
+        # Running the scheduler
+        print(f"[{exp_name}] Initializing the scheduler...")
+        run_scheduler(head_node, scheduler_file, output_dir, PATH_TO_SIF_FILE)
+        print(f"[{exp_name}] Scheduler started!")
+
+        # Running the Dask workers
+        print(f"[{exp_name}] Initializing the workers...")
+        run_workers(nodes, head_node_ip, dask_workers_per_node, scheduler_file, output_dir, PATH_TO_SIF_FILE)
+        print(f"[{exp_name}] Workers started!")
+
+        time.sleep(5)  # wait for the workers to start
+
+        # Running the analytics
+        print(f"[{exp_name}] Initializing the analytics...")
+        analytics_process = run_analytics(head_node, total_dask_workers, DEISA_PATH, ANALYTICS_PY_FILE, scheduler_file, 
+                                        output_dir, PATH_TO_SIF_FILE)
+        print(f"[{exp_name}] Analytics started!")
+
         # Running the simulation
         print(f"[{exp_name}] Initializing the simulation...")
         mx = int(configs["mx"])
         my = int(configs["my"])
         mz = int(configs["mz"])
         mpi_np = mx * my * mz
-        assert mpi_np <= total_simulation_cores, "mpi_np must be less than or equal to total_simulation_cores"
+        assert mpi_np <= total_simulation_cores, f"mpi_np must be less than or equal to total_simulation_cores. mpi_np: {mpi_np}, total_simulation_cores: {total_simulation_cores}"
         print(f"[{exp_name}] Running simulation with {mpi_np} MPI processes")
         mpi_process = run_simulation(head_node, nodes, mpi_np, cores_per_node, DEISA_PATH, SIM_EXECUTABLE, s_ini_file, 
                             pdi_deisa_yml, output_dir, PATH_TO_SIF_FILE, omp_num_threads)
@@ -88,6 +123,8 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         mpi_process.wait()
         print(f"[{exp_name}] Simulation finished!")
         print(f"[{exp_name}] Waiting for the analytics to finish...")
+        analytics_process.wait()
+        print(f"[{exp_name}] Analytics finished!")
 
         if monitoring:
             #kill the monitoring processes
@@ -97,8 +134,11 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
             print(f"[{exp_name}] Monitoring processes stopped!")
 
         mpi_process_stats = mpi_process.stats()
-        with open(output_dir + "mpi_process_stats.txt", "w") as f_mpi:
+        analytics_process_stats = analytics_process.stats()
+        with open(output_dir + "mpi_process_stats.txt", "w") as f_mpi, \
+             open(output_dir + "analytics_process_stats.txt", "w") as f_analytics:
             f_mpi.write(str(mpi_process_stats))
+            f_analytics.write(str(analytics_process_stats))
 
     except Exception as e:
         print(f"[{exp_name}] An error occurred: {e}")
@@ -108,27 +148,24 @@ def run_experiment(reserved_nodes: int, s_ini_file: str, pdi_deisa_yml: str, nam
         execo_g5k.oardel(jobs)
         print(f"[{exp_name}] Job deleted!")
 
+        # delete scheduler file
+        if os.path.exists(scheduler_file):
+            os.remove(scheduler_file)
+            print(f"[{exp_name}] Scheduler file {scheduler_file} deleted!")
 
-def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
-    if problem_size < 0:
-        raise ValueError("problem_size must be greater than or equal to 1")
-    # base values
-    nx=32
-    ny=32
-    nz=32
-    for i in range(problem_size):
-        if i%2 == 0:
-            nx *= 2
-        else:
-            ny *= 2
 
+
+def produce_config_files(output_dir: str, mpi_np: int,nx=32, ny=32, nz=32):  
+    
     mx = 1
     my = 1
     mz = 1
+
     log_n_mpi = math.log2(mpi_np)
     if not log_n_mpi.is_integer():
         raise ValueError("mpi_np must be a power of 2")
     log_n_mpi = int(log_n_mpi)
+    
     for i in range(log_n_mpi):
         if i%2 == 0:
             mx *= 2
@@ -136,7 +173,7 @@ def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
             my *= 2
 
     #write the simulation ini file in output_dir
-    simulation_ini_file = output_dir + f"{mpi_np}_{problem_size}.ini"
+    simulation_ini_file = output_dir + f"{mpi_np}.ini"
     T_END_VAR = 10
     N_STEP_MAX_VAR=500
     #read the template ini file
@@ -156,11 +193,14 @@ def produce_config_files(output_dir: str, mpi_np: int, problem_size: int):
         f.write(template_content)
     
     #write the PDI DEISA YAML file in output_dir
-    pdi_deisa_yml_file = output_dir + f"{mpi_np}_{problem_size}.yml"
+    pdi_deisa_yml_file = output_dir + f"{mpi_np}.yml"
     #read the template yaml file
-    template_yml_file = HOME_DIR + "/bench/experiment_code/templates/io_NO_deisa.yml"
+    template_yml_file = HOME_DIR + "/bench/experiment_code/templates/template.yml"
     with open(template_yml_file, "r") as f:
         template_content = f.read()
+    #replace the variables in the template with the values
+    SCHEDULER_INFO_VAR = output_dir + "scheduler.json"
+    template_content = template_content.replace("<SCHEDULER_INFO_VAR>", SCHEDULER_INFO_VAR)
     with open(pdi_deisa_yml_file, "w") as f:
         f.write(template_content)
     
@@ -175,15 +215,24 @@ if __name__ == "__main__":
                         help="Number of reserved nodes (including head node).")
     parser.add_argument("--mpi_np", "-np", type=int, required=True,
                         help="Number of MPI processes to run in the simulation.")
-    parser.add_argument("--problem_size", "-ps", type=int, required=True,
-                        help="Problem size for the simulation.")
+    parser.add_argument("--mpi_process_problem_size", "-mps", type=str, default="256,256,32", metavar="x,y,z",
+                        help="Problem size for the simulation. Format: x,y,z (default: 256,256,32).")
     parser.add_argument("--name", "-nm", type=str, required=True, help="Name of the experiment.")
     parser.add_argument("--walltime", "-t",type=int, default=10*60, help="Walltime in seconds (default: 600).")
+    parser.add_argument("--dask_workers_per_node","-dw", type=int, default=1, 
+                        help="Number of Dask workers per node (default: 1).")
+    parser.add_argument("--total_dask_workers", "-tw", type=int, default=None,
+                        help="Total number of Dask workers (default: None, which means reserved_nodes - 1).")
     parser.add_argument("--monitoring", "-m", action="store_true", 
                         help="Enable monitoring of the experiment (default: False).")
+    parser.add_argument("--omp_num_threads", "-omp_t", type=int, default=1,
+                        help="Number of OpenMP threads to use in the simulation (default: 1).")
     args = parser.parse_args()
 
-    exp_name = f"{args.name}:{args.reserved_nodes}:{args.mpi_np}:{args.problem_size}"
+    if args.total_dask_workers is None:
+        args.total_dask_workers = args.reserved_nodes - 1
+
+    exp_name = f"{args.name}:{args.reserved_nodes}:{args.mpi_np}:{args.mpi_process_problem_size}"
     output_dir = HOME_DIR + f"/bench/experiment_result/{exp_name}/"
     if not os.path.exists(output_dir): #create output directory if it does not exist
         os.makedirs(output_dir)
@@ -193,14 +242,25 @@ if __name__ == "__main__":
     
     print(f"[{exp_name}] Reserved Nodes: {args.reserved_nodes}")
     print(f"[{exp_name}] MPI NP: {args.mpi_np}")
-    print(f"[{exp_name}] Problem Size: {args.problem_size}")
+    # print(f"[{exp_name}] Problem Size: {args.mpi_process_problem_size}")
     
     #Create the simulation ini file and PDI DEISA YAML file
-    simulation_ini_file,pdi_deisa_yml_file = produce_config_files(output_dir, args.mpi_np, args.problem_size)
+    mpi_process_problem_size = args.mpi_process_problem_size
+    mpi_process_problem_size = mpi_process_problem_size.split(",")
+    if len(mpi_process_problem_size) != 3:
+        raise ValueError("mpi_process_problem_size must be in the format x,y,z")
+    mpi_process_problem_size = [int(x) for x in mpi_process_problem_size]
+    if any(x <= 0 for x in mpi_process_problem_size):
+        raise ValueError("mpi_process_problem_size must be greater than 0")
+    x, y, z = mpi_process_problem_size
+    simulation_ini_file,pdi_deisa_yml_file = produce_config_files(output_dir, args.mpi_np, nx=x, ny=y, nz=z)
 
     run_experiment(reserved_nodes=args.reserved_nodes, 
                    s_ini_file=simulation_ini_file,
                    pdi_deisa_yml=pdi_deisa_yml_file,
                    name=args.name,
                    walltime=args.walltime,
+                   dask_workers_per_node=args.dask_workers_per_node,
+                   total_dask_workers=args.total_dask_workers,
+                   omp_num_threads=args.omp_num_threads,
                    monitoring=args.monitoring)

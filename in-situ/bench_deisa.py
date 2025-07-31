@@ -60,9 +60,7 @@ print("[Analytics] Z-dim =", mz, flush=True)
 z_pos = int(mz / 3)
 print("[Analytics] getting slice at z =", z_pos, flush=True)
 
-t_stride = 1
-
-slice = arrays["global_t"][0:mt:t_stride, :, z_pos, :, :]
+print("[Analytics] arrays global_t shape:", gt.shape, flush=True)
 
 # Check contract
 # arrays.check_contract()
@@ -78,56 +76,44 @@ with performance_report(filename=f"{output_dir}dask-report.html"), dask.config.s
     array_optimize=None
 ), ms.sample("collection 1"):
     print(f"[Analytics] starting computation at {time.time()}", flush=True)
-    ekin_deisa = (
-        0.5
-        * slice[:, id, :, :]
-        * (
-            slice[:, iu, :, :] * slice[:, iu, :, :]
-            + slice[:, iv, :, :] * slice[:, iv, :, :]
-            + slice[:, iw, :, :] * slice[:, iw, :, :]
+    
+    def Derivee(F, dx):
+        """
+        First derivative along axis=0 (time) of a 3D field F[t, x, y]:
+        F  : dask array of shape (nt, nx, ny)
+        dx : spacing along that axis
+        Returns a dask array of shape (nt-4, nx, ny).
+        """
+        c0 = 2.0 / 3.0
+        return c0/dx * (
+            F[3:-1, :, :] - F[1:-3, :, :]
+            - (F[4:, :, :] - F[:-4, :, :]) / 8.0
         )
-        / (mz * mz)
-    )
-    # better to lessen the memory used by .persist methods
-    # also in general, we do not need to persist in chains of computation, in this specific case,
-    # I think we do sum_over_xy deletes ekin_persisted, causing later computations to be recomputed
-    # thus making it fail -- also, not super clear why rechunking is needed.
-    ekin_persisted = client.persist(ekin_deisa)
 
-    sum_over_xy = ekin_persisted.sum(axis=(1, 2))
+    # print(f"[Analytics] Derivee function defined at {time.time()}", flush=True)
+    # deriv = Derivee(slice, dx=1.0)
+    # mean_deriv = deriv.mean()
+    # print(f"[Analytics] Derivative computed at {time.time()}", flush=True)
+    
 
-    ekin_deisa_rechunked = ekin_persisted.rechunk(
-        {0: 1, 1: -1, 2: -1}
-    )  # no chunking along dim 0, 1, and 2
-
-    # npix = ekin_deisa_rechunked.shape[1]
-    ekin_fft2 = da.fft.fft2(ekin_deisa_rechunked)  # fft over the last two axes
-    fourier_amplitudes = da.absolute(ekin_fft2) ** 2
-    # fourier_amplitudes = fourier_amplitudes.reshape(mt/t_stride, mx*my)
-    # kfreq = da.fft.fftfreq(npix) * npix
-    # kfreq2D = da.meshgrid(kfreq, kfreq)
-    # knrm = da.sqrt(kfreq2D[0] ** 2 + kfreq2D[1] ** 2)
-    # knrm = knrm.flatten()
-    # kbins = da.arange(0.5, npix // 2 + 1, 1.0)
-    # kvals = 0.5 * (kbins[1:] + kbins[:-1])
-
-    # output task graph
-    # sum_over_xy.visualize(filename="sum_over_xy")
-    # slice.visualize(filename="slice")
-    # fourier_amplitudes.visualize(filename="fourier_amplitudes")
-
+    # print(f"[Analytics] slice shape: {slice.shape}", flush=True)
     ts = time.time()
-    res2 = ekin_persisted.compute()
+    # sum over the iterations and compute the mean over axis y
+    sum_over_iterations = gt[:, 0, z_pos, :, 0].sum(axis=0).mean(axis=0)
+    res1 = sum_over_iterations.compute()
     te = time.time()
     print(f"[Analytics] time ekin: {te-ts}")
+    print(f"[Analytics] res1: {res1}", flush=True)
 
     ts = time.time()
-    res3 = sum_over_xy.compute()
+    # sum over the iterations
+    # res2 = gt[:, 0, z_pos, 0, 0].compute()
     te = time.time()
     print(f"[Analytics] time sum over xy: {te-ts}")
+    # print(f"[Analytics] sum over iterations: {res2}", flush=True)
 
     ts = time.time()
-    res4 = fourier_amplitudes.compute()
+    # res4 = fourier_amplitudes.compute()
     te = time.time()
     print(f"[Analytics] time fourier: {te-ts}")
 
@@ -141,7 +127,7 @@ with open(f"{output_dir}outgoing.txt", "w") as f1, open(f"{output_dir}incoming.t
 ) as f3:
     f1.write(pformat(l1))
     f2.write(pformat(l2))
-    print(f"{res2=}\n{res3=}\n{res4=}", file=f3)
+    # print(f"{res2=}", file=f3)
 
 res = ms.plot(align=True)
 if isinstance(res, plt.Axes):

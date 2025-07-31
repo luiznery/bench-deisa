@@ -16,11 +16,13 @@ if [ -d "$BUILD_DIR" ]; then
     rm -rf $BUILD_DIR
 fi
 
+mkdir -p $BUILD_DIR
+
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DEuler_ENABLE_PDI=ON \
-    -DKokkos_ENABLE_OPENMP=ON \
-    -DKokkos_ENABLE_SERIAL=OFF \
+    -DKokkos_ENABLE_OPENMP=OFF \
+    -DKokkos_ENABLE_SERIAL=ON \
     -DKokkos_ENABLE_CUDA=OFF \
     -DKokkos_ARCH_AMPERE80=OFF \
     -DKokkos_ARCH_PASCAL60=OFF \

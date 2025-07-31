@@ -4,3 +4,6 @@
 [submodule "lib/dms"]
 	path = lib/dms
 	url = https://github.com/Maison-de-la-Simulation/dms.git
+[submodule "simulation"]
+	path = simulation
+	url = https://github.com/Maison-de-la-Simulation/bench-in-situ.git

@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import glob
 
 
-experiment_ids = ['weak_1748729080']
+experiment_ids = ['strong_1748956782:2:16:256,256,32']
 
 # Find all directories that match the experiment IDs
 experiment_dirs = []
@@ -20,7 +20,7 @@ for d in experiment_dirs:
     name = d.split("/")[-1].split(":")[0]
     total_nodes = int(d.split("/")[-1].split(":")[1])
     mpi_processes = int(d.split("/")[-1].split(":")[2])
-    problem_size = int(d.split("/")[-1].split(":")[3])
+    problem_size = d.split("/")[-1].split(":")[3]
 
     res_file = f"../experiment_result/{d}/analytics.e"
     
